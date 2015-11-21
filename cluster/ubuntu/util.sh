@@ -374,8 +374,15 @@ function provision-master() {
   
   EXTRA_SANS=$(echo "${EXTRA_SANS[@]}" | tr ' ' ,)
 
+  BASH_DEBUG_FLAGS=""
+  if [[ "$DEBUG" == "true" ]] ; then
+    BASH_DEBUG_FLAGS="set -x"
+  fi
+
   # remote login to MASTER and configue k8s master
   ssh $SSH_OPTS -t "${MASTER}" "
+    set +e
+    ${BASH_DEBUG_FLAGS}
     source ~/kube/util.sh
 
     setClusterInfo
@@ -387,13 +394,15 @@ function provision-master() {
     create-kube-controller-manager-opts '${NODE_IPS}'
     create-kube-scheduler-opts
     create-flanneld-opts '127.0.0.1'
-    sudo -E -p '[sudo] password to start master: ' -- /bin/bash -c '
+    sudo -E -p '[sudo] password to start master: ' -- /bin/bash -ce '
+      ${BASH_DEBUG_FLAGS}
+
       cp ~/kube/default/* /etc/default/ 
       cp ~/kube/init_conf/* /etc/init/ 
       cp ~/kube/init_scripts/* /etc/init.d/
       
       groupadd -f -r kube-cert
-      \"${PROXY_SETTING}\" ~/kube/make-ca-cert.sh \"${MASTER_IP}\" \"${EXTRA_SANS}\"
+      ${PROXY_SETTING} ~/kube/make-ca-cert.sh \"${MASTER_IP}\" \"${EXTRA_SANS}\"
       mkdir -p /opt/bin/
       cp ~/kube/master/* /opt/bin/
       service etcd start
@@ -419,8 +428,15 @@ function provision-node() {
     ubuntu/binaries/minion \
     "${1}:~/kube"
 
+  BASH_DEBUG_FLAGS=""
+  if [[ "$DEBUG" == "true" ]] ; then
+    BASH_DEBUG_FLAGS="set -x"
+  fi
+
   # remote login to node and configue k8s node
   ssh $SSH_OPTS -t "$1" "
+    set +e
+    ${BASH_DEBUG_FLAGS}
     source ~/kube/util.sh
     
     setClusterInfo
@@ -432,7 +448,8 @@ function provision-node() {
     create-kube-proxy-opts '${MASTER_IP}'
     create-flanneld-opts '${MASTER_IP}'
                          
-    sudo -E -p '[sudo] password to start node: ' -- /bin/bash -c '
+    sudo -E -p '[sudo] password to start node: ' -- /bin/bash -ce '    
+      ${BASH_DEBUG_FLAGS}
       cp ~/kube/default/* /etc/default/
       cp ~/kube/init_conf/* /etc/init/
       cp ~/kube/init_scripts/* /etc/init.d/ 
@@ -476,8 +493,15 @@ function provision-masterandnode() {
   
   EXTRA_SANS=$(echo "${EXTRA_SANS[@]}" | tr ' ' ,)
 
+  BASH_DEBUG_FLAGS=""
+  if [[ "$DEBUG" == "true" ]] ; then
+    BASH_DEBUG_FLAGS="set -x"
+  fi
+
   # remote login to the master/node and configue k8s
   ssh $SSH_OPTS -t "$MASTER" "
+    set +e
+    ${BASH_DEBUG_FLAGS}
     source ~/kube/util.sh
      
     setClusterInfo
@@ -496,13 +520,14 @@ function provision-masterandnode() {
     create-kube-proxy-opts '${MASTER_IP}'
     create-flanneld-opts '127.0.0.1'
     
-    sudo -E -p '[sudo] password to start master: ' -- /bin/bash -c ' 
+    sudo -E -p '[sudo] password to start master: ' -- /bin/bash -ce ' 
+      ${BASH_DEBUG_FLAGS}
       cp ~/kube/default/* /etc/default/ 
       cp ~/kube/init_conf/* /etc/init/ 
       cp ~/kube/init_scripts/* /etc/init.d/
       
       groupadd -f -r kube-cert
-      \"${PROXY_SETTING}\" ~/kube/make-ca-cert.sh \"${MASTER_IP}\" \"${EXTRA_SANS}\"
+      ${PROXY_SETTING} ~/kube/make-ca-cert.sh \"${MASTER_IP}\" \"${EXTRA_SANS}\"
       mkdir -p /opt/bin/ 
       cp ~/kube/master/* /opt/bin/
       cp ~/kube/minion/* /opt/bin/
