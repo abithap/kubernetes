@@ -189,7 +189,8 @@ function create-etcd-opts() {
 ETCD_OPTS="\
  -name infra\
  -listen-client-urls http://0.0.0.0:4001\
- -advertise-client-urls http://127.0.0.1:4001"
+ -advertise-client-urls http://127.0.0.1:4001\
+ ${ETCD_OPTS}"
 EOF
 }
 
@@ -205,7 +206,8 @@ KUBE_APISERVER_OPTS="\
  --service-node-port-range=${3}\
  --client-ca-file=/srv/kubernetes/ca.crt\
  --tls-cert-file=/srv/kubernetes/server.cert\
- --tls-private-key-file=/srv/kubernetes/server.key"
+ --tls-private-key-file=/srv/kubernetes/server.key\
+ ${KUBE_APISERVER_OPTS}"
 EOF
 }
 
@@ -215,7 +217,8 @@ KUBE_CONTROLLER_MANAGER_OPTS="\
  --master=127.0.0.1:8080\
  --root-ca-file=/srv/kubernetes/ca.crt\
  --service-account-private-key-file=/srv/kubernetes/server.key\
- --logtostderr=true"
+ --logtostderr=true\
+ ${KUBE_CONTROLLER_MANAGER_OPTS}"
 EOF
 
 }
@@ -224,7 +227,8 @@ function create-kube-scheduler-opts() {
   cat <<EOF > ~/kube/default/kube-scheduler
 KUBE_SCHEDULER_OPTS="\
  --logtostderr=true\
- --master=127.0.0.1:8080"
+ --master=127.0.0.1:8080\
+ ${KUBE_SCHEDULER_OPTS}"
 EOF
 
 }
@@ -232,13 +236,13 @@ EOF
 function create-kubelet-opts() {
   cat <<EOF > ~/kube/default/kubelet
 KUBELET_OPTS="\
- --address=0.0.0.0\
+ --address=0.0.0.0 \
  --port=10250 \
- --hostname-override=${1} \
- --api-servers=http://${2}:8080 \
+ --api-servers=http://${1}:8080 \
  --logtostderr=true \
- --cluster-dns=$3 \
- --cluster-domain=$4"
+ --cluster-dns=$2 \
+ --cluster-domain=$3 \
+ ${KUBELET_OPTS}"
 EOF
 
 }
@@ -247,14 +251,15 @@ function create-kube-proxy-opts() {
   cat <<EOF > ~/kube/default/kube-proxy
 KUBE_PROXY_OPTS="\
  --master=http://${1}:8080 \
- --logtostderr=true"
+ --logtostderr=true\
+ ${KUBE_PROXY_OPTS}"
 EOF
 
 }
 
 function create-flanneld-opts() {
   cat <<EOF > ~/kube/default/flanneld
-FLANNEL_OPTS="--etcd-endpoints=http://${1}:4001"
+FLANNEL_OPTS="--etcd-endpoints=http://${1}:4001 ${FLANNEL_OPTS}"
 EOF
 }
 
@@ -383,6 +388,7 @@ function provision-master() {
   ssh $SSH_OPTS -t "${MASTER}" "
     set +e
     ${BASH_DEBUG_FLAGS}
+    source ~/kube/config-default.sh
     source ~/kube/util.sh
 
     setClusterInfo
@@ -437,11 +443,11 @@ function provision-node() {
   ssh $SSH_OPTS -t "$1" "
     set +e
     ${BASH_DEBUG_FLAGS}
+    source ~/kube/config-default.sh
     source ~/kube/util.sh
     
     setClusterInfo
     create-kubelet-opts \
-      '${1#*@}' \
       '${MASTER_IP}' \
       '${DNS_SERVER_IP}' \
       '${DNS_DOMAIN}'
@@ -502,6 +508,7 @@ function provision-masterandnode() {
   ssh $SSH_OPTS -t "$MASTER" "
     set +e
     ${BASH_DEBUG_FLAGS}
+    source ~/kube/config-default.sh
     source ~/kube/util.sh
      
     setClusterInfo
@@ -513,7 +520,6 @@ function provision-masterandnode() {
     create-kube-controller-manager-opts '${NODE_IPS}'
     create-kube-scheduler-opts
     create-kubelet-opts \
-      '${MASTER_IP}' \
       '${MASTER_IP}' \
       '${DNS_SERVER_IP}' \
       '${DNS_DOMAIN}'

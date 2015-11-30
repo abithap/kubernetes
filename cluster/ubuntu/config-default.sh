@@ -68,8 +68,29 @@ ENABLE_CLUSTER_UI="${KUBE_ENABLE_CLUSTER_UI:-true}"
 #RUNTIME_CONFIG=""
 
 # Optional: Add http or https proxy when download easy-rsa.
-# Add envitonment variable separated with blank space like "http_proxy=http://10.x.x.x:8080 https_proxy=https://10.x.x.x:8443"
+# Add environment variable separated with blank space like "http_proxy=http://10.x.x.x:8080 https_proxy=https://10.x.x.x:8443"
 PROXY_SETTING=${PROXY_SETTING:-""}
 
 DEBUG=${DEBUG:-"false"}
 
+# Extra, user provided options to set on the kube-api-server command line. This can be useful
+# for setting up cloud provider information or other flags.
+KUBE_APISERVER_OPTS=${KUBE_APISERVER_OPTS:-""}
+
+# Extra, user provided options to set on the kube-controller-manager command line.
+KUBE_CONTROLLER_MANAGER_OPTS=${KUBE_CONTROLLER_MANAGER_OPTS:-""}
+
+# Extra, user provided options to set on the kube-scheduler command line.
+KUBE_SCHEDULER_OPTS=${KUBE_SCHEDULER_OPTS:-""}
+
+# Extra, user provided options to set on the kubelet command line.
+KUBELET_OPTS=${KUBELET_OPTS:-""}
+
+# Extra, user provided options to set on the kube-proxy command line.
+KUBE_PROXY_OPTS=${KUBE_PROXY_OPTS:-""}
+
+# Extra, user provided options to set for the flannel daemon.
+FLANNEL_OPTS=${FLANNEL_OPTS:-""}
+
+# Extra, user provided options to set for etcd.
+ETCD_OPTS=${ETCD_OPTS:-""}
